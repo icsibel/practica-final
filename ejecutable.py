@@ -2,20 +2,20 @@ import re
 
 #empezar  validaciones
 #valida letras y espacios - r es para que tome la cadena literal, espacios es el \s, + para que puedan haber muchas letras, 
-    # y $ para marcar el final del texto, ^ para empezar la cadena- r.match es para validar el texto, r valida si y match verifica que si este con las reglas de r
+    # y $ para marcar el final del texto, ^ para empezar la cadena- r.match es para validar el texto, r valida si y match verifica que si este con las reglas de r, {3, 60} longitud min max
 def validar_texto(mensaje):
     while True:
         atributo = input(mensaje).strip()
-        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ0-9\s]+$', atributo):
+        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ0-9\s]{3,60}$' , atributo):
             return atributo
-        print("Solo se permiten letras, números y espacios")
+        print("Solo se permiten letras, numeros y espacios, porfavor asegurate de que los datos esten completos (minimo 3 caracteres)")
 
 def validar_texto_sin_numeros(mensaje):
     while True:
         atributo = input(mensaje).strip()
-        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$', atributo):
+        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{3,60}$', atributo):
             return atributo
-        print("Solo se permiten letras y espacios")
+        print("Solo se permiten letras y espacios, porfavor asegurate de que los datos esten completos (minimo 3 caracteres)")
 
 def validar_entero(mensaje):
     while True:
@@ -39,6 +39,7 @@ def validar_modalidad(mensaje):
         if atributo in ["virtual", "presencial"]:
             return atributo
         print("La modalidad debe ser 'virtual' o 'presencial'")
+
 
 
 
@@ -172,6 +173,11 @@ class SistemasPrestamos:
         marca= validar_texto_sin_numeros("Marca (sin numeros): ")
         tamano= validar_flotante("Tamano: ")
         precio= validar_flotante("precio: ")
+         
+        for equipo in self.inventario_equipos:
+            if equipo.serial == serial:
+                print("\n Equipo ya esta registrado")
+                return equipo
         
 
         if opcion =="1":
@@ -186,6 +192,7 @@ class SistemasPrestamos:
         else:
             print("Opcion invalida")
             return
+        
         self.inventario_equipos.append(equipo)
         print("El equipo se registro con exito :) ")
 

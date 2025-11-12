@@ -1,4 +1,4 @@
-from ejecutable import SistemasPrestamos, ComputadorPortatil, validar_texto
+from ejecutable import SistemasPrestamos, ComputadorPortatil, TabletaGrafica, validar_texto, EstudianteIngenieria, EstudianteDiseno
 sistemasPrestamos = SistemasPrestamos()
 while True:
     print("\n=== MENÚ PRINCIPAL ===")
@@ -20,9 +20,10 @@ while True:
                 case "2":
                     serial= validar_texto("Ingrese el serial que deseas buscar: ")
                     equipo = sistemasPrestamos.buscar_equipo(serial)
+
                     if isinstance(equipo, ComputadorPortatil):
                         print(f"Computador portatil: {equipo.serial} | {equipo.marca} | {equipo.tamano} | {equipo.precio} | {equipo.sistema_operativo} | {equipo.procesador}")
-                    else:
+                    if isinstance(equipo, TabletaGrafica):
                         print(f"Tableta grafica: {equipo.serial} | {equipo.marca} | {equipo.tamano} | {equipo.precio} | {equipo.almacenamiento} | {equipo.peso}")
                     
 
@@ -45,7 +46,14 @@ while True:
                 case "4":
                     sistemasPrestamos.modificar_prestamo()
                 case "5":
-                    sistemasPrestamos.buscar_estudiante()
+                    cedula= validar_texto("Ingrese la cedula del estudiante que deseas buscar: ")
+                    cedula = sistemasPrestamos.buscar_estudiante(cedula)
+
+                    if isinstance(cedula, EstudianteIngenieria):
+                        print(f"Estudiant de Ingenieria: {cedula.nombre} | {cedula.apellido} | {cedula.telefono} | {cedula.numero_semestre} | {cedula.promedio_acumulado} | {cedula.serial_equipo}")
+                    if isinstance(cedula, EstudianteDiseno):
+                        print(f"Estudiante de diseño: {equipo.serial} | {equipo.marca} | {equipo.tamano} | {equipo.precio} | {equipo.almacenamiento} | {equipo.peso}")
+                    
                 case "6":
                     print("Volviendo al menú principal...")
                     break
