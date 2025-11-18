@@ -6,14 +6,14 @@ import re
 def validar_texto(mensaje):
     while True:
         atributo = input(mensaje).strip()
-        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ0-9\s]{3,60}$' , atributo):
+        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ0-9\s]{2,60}$' , atributo):
             return atributo
         print("Solo se permiten letras, numeros y espacios, porfavor asegurate de que los datos esten completos (minimo 3 caracteres)")
 
 def validar_texto_sin_numeros(mensaje):
     while True:
         atributo = input(mensaje).strip()
-        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{3,60}$', atributo):
+        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{2,60}$', atributo):
             return atributo
         print("Solo se permiten letras y espacios, porfavor asegurate de que los datos esten completos (minimo 3 caracteres)")
 
@@ -40,7 +40,13 @@ def validar_modalidad(mensaje):
             return atributo
         print("La modalidad debe ser 'virtual' o 'presencial'")
 
-
+def validar_cedula(mensaje):
+    while True:
+        atributo = input(mensaje).strip()
+        # Solo números pero se devuelve como texto
+        if atributo.isdigit():
+            return atributo
+        print("La cédula solo debe contener numeros, sin letras ni simbolos.")
 
 
 #HU2
@@ -113,7 +119,7 @@ class ComputadorPortatil(Electronicos):
             print("\n--- Seleccionar sitema operativo  ---")
             print("1. Windows 7")
             print("2. Windows 10")
-            print("3. Window 11")
+            print("3. Windows 11")
 
             opcion = input("Elige una opción: ")
 
@@ -169,29 +175,37 @@ class SistemasPrestamos:
         print("Que tipo de eqipo requiere el estudiante: \n1. Tableta grafica \n2. Computador portatil")
         opcion= input("Elige una opcion: ")
 
+        #validacion extra porque no me estaba reconociendo di habia un error  al escoger la opcion
+        #no supe como mas hacerla pero asi funciona
+        match opcion:
+            case "1":
+                tipo = "tableta"
+            case "2":
+                tipo = "pc"
+            case _:
+                print("Opción inválida")
+                return
+
         serial= validar_texto("Serial: ")
         marca= validar_texto_sin_numeros("Marca (sin numeros): ")
         tamano= validar_flotante("Tamano: ")
         precio= validar_flotante("precio: ")
-         
+
         for equipo in self.inventario_equipos:
             if equipo.serial == serial:
-                print("\n Equipo ya esta registrado")
+                print("\n Este equipo ya esta registrado")
                 return equipo
-        
-
-        if opcion =="1":
-            peso=validar_flotante("Peso: ")
-            #aqui ya lo relaciono con la clase y le paso las variables a verificar
-            equipo= TabletaGrafica(serial, marca, tamano, precio,peso)
-            equipo.elegir_almacenamiento()
-        elif opcion== "2":
-            equipo= ComputadorPortatil(serial, marca, tamano, precio)
-            equipo.elegir_sistema_operativo()
-            equipo.elegir_procesador()
-        else:
-            print("Opcion invalida")
-            return
+            
+        match opcion:
+            case "1":
+                peso=validar_flotante("Peso: ")
+                #aqui ya lo relaciono con la clase y le paso las variables a verificar
+                equipo= TabletaGrafica(serial, marca, tamano, precio,peso)
+                equipo.elegir_almacenamiento()
+            case "2":
+                equipo= ComputadorPortatil(serial, marca, tamano, precio)
+                equipo.elegir_sistema_operativo()
+                equipo.elegir_procesador()
         
         self.inventario_equipos.append(equipo)
         print("El equipo se registro con exito :) ")
@@ -209,10 +223,15 @@ class SistemasPrestamos:
         print("A que facultad pertenece el estudiante:  \n1. Ingenieria \n2. Diseño")
         tipo= input("\n Elige una opcion: ")
 
-        cedula= validar_entero("Cedula: ")
+        cedula= validar_cedula("Cedula: ")
         nombre= validar_texto_sin_numeros("Nombre: ")
         apellido= validar_texto_sin_numeros("Apellido: ")
         telefono= validar_texto("Telefono: ")
+
+        for estudiante in self.estudiantes_diseno + self.estudiantes_ingenieria:
+            if estudiante.cedula == cedula:
+                print("\n Este estudiante ya esta registrado")
+                return estudiante
 
         if tipo =="1":
             numero_semestre= validar_entero("Numero de semestre: ")
@@ -252,20 +271,23 @@ class SistemasPrestamos:
     def equipos_prestados(self,serial):
         for equipo in self.prestamos:
             if equipo.equipo.serial == serial and not equipo.devuelto:
-                return equipo
-        print("\n Equipo no registrado en prestamos")
+                return equipo 
         return None
 
 
     def agregar_prestamo(self):
         print("\n--- Registrar prestamo ---")
 
-        cedula=validar_entero("Cedula del estudiante: ")
+        cedula=validar_cedula("Cedula del estudiante: ")
         estudiante=self.buscar_estudiante(cedula)
         if estudiante is None:
             print("Estudiante no encontrado, porfavor registralo primero")
             return
         
+        if self.estudiante_con_prestamos(cedula):
+            print("\nEste estudiante ya tiene un préstamo activo")
+            return
+
         serial=input("Serial del equipo: ")
         equipo=self.buscar_equipo(serial)
         if equipo is None:
@@ -276,8 +298,7 @@ class SistemasPrestamos:
             print("\n Este equipo ya esta prestado")
             return
         
-        prest = {"estudiante": estudiante, "equipo": equipo}
-        
+        prest = Prestamo(estudiante, equipo)
         self.prestamos.append(prest)
         print("\n Prestamo registrado")
 
@@ -286,10 +307,11 @@ class SistemasPrestamos:
         print("\n--- Devolución de equipo ---")
         serial = input("Serial del equipo: ")
 
-        for equipo in self.prestamos:
-            if equipo.equipo.serial == serial and not equipo.devuelto:
-                equipo.devuelto = True
-                self.equipos_devueltos.append(equipo.equipo)
+        for i, prestamo in enumerate(self.prestamos):
+            if prestamo.equipo.serial == serial and not prestamo.devuelto:
+                prestamo.devuelto = True
+                self.equipos_devueltos.append(prestamo.equipo)
+                del self.prestamos[i]
                 print("\n Devolución registrada")
                 return
         print("\n No se encontró préstamo activo para ese equipo.")
@@ -311,6 +333,7 @@ class SistemasPrestamos:
         for equipo in self.equipos_devueltos:
             print(f"\nSerial: {equipo.serial} | Marca: {equipo.marca} ")
 
+    #hu5 tambien
     def modificar_prestamo(self):
         print("\n--- Modificar prestamo ---")
         print("1. Buscar por cédula del estudiante")
@@ -333,43 +356,90 @@ class SistemasPrestamos:
         else:
             print("\nOpción inválida.")
             return
+        
         if prestamo_encontrado is None:
-            print("\nNo se encontró un préstamo activo con esos datos.")
+            print("\nNo se encontró un préstamo activo con esos datos")
             return
         
-        #mostrar informacion
-        print("\n--- Préstamo encontrado ---")
-        print(f"Estudiante: {prestamo_encontrado.estudiante.nombre} {prestamo_encontrado.estudiante.apellido}")
-        print(f"Cedula: {prestamo_encontrado.estudiante.cedula}")
-        print(f"Equipo : {prestamo_encontrado.equipo.serial} - {prestamo_encontrado.equipo.marca}")
-        
+        while True: 
         #menu de modificacion
-        print("\n--- Opciones de modificación ---")
-        print("1. Marcar como devuelto")
-        print("2. Cambiar equipo prestado")
-        print("3. Cancelar modificación")
-        opcion_mod = input("Elige una opción: ")
+            print("\n--- Opciones de modificación ---")
+            print("1. Cambiar datos del estudiante")
+            print("2. Cambiar equipo prestado")
+            print("3. Marcar prestamo como devuelto")
+            print("4. Cancelar modificación")
+            opcion_mod = input("Elige una opción: ")
 
-        if opcion_mod == "1":
-            prestamo_encontrado.devuelto = True
-            self.equipos_devueltos.append(prestamo_encontrado.equipo)
-            print("\nEl préstamo ha sido marcado como devuelto.")
-        elif opcion_mod == "2":
-            nuevo_serial = input("\nIngrese el serial del nuevo equipo: ")
-            nuevo_equipo = self.buscar_equipo(nuevo_serial)
+            if opcion_mod == "1":
+                estudiante= prestamo_encontrado.estudiante
+                print(f"\n Estudiante actual: {estudiante.nombre} {estudiante.apellido} | telefono: {estudiante.telefono}")
 
-            if nuevo_equipo is None:
-                print("\nNo existe un equipo con ese serial")
+                nuevo_nombre= input("Nuevo nombre (ENTER para dejar igual): ").strip()
+                if nuevo_nombre != "":
+                    nuevo_nombre= validar_texto_sin_numeros("Confirme su nombre : ")
+                    estudiante.nombre=nuevo_nombre
+
+                nuevo_apellido = input("Nuevo apellido (ENTER para dejar igual): ").strip()
+                if nuevo_apellido != "":
+                    nuevo_apellido=validar_texto_sin_numeros("Confirme su apellido: ")
+                    estudiante.apellido=nuevo_apellido
+
+                nuevo_telefono= input("Nuevo telefono (ENTER para dejar igual): ").strip()
+                if nuevo_telefono != "":
+                    nuevo_telefono= validar_texto("Confirme su numero de telefono: ")
+                    estudiante.telefono=nuevo_telefono
+                
+                print("\n Datos actualizados correctamente")
+                print(f"\n El estudiante  cambio sus datos a: {nuevo_nombre} - {nuevo_apellido}- {nuevo_telefono}")
+
+            elif opcion_mod == "2":
+                nuevo_serial = validar_texto("\nIngrese el serial del nuevo equipo: ")
+                nuevo_equipo = self.buscar_equipo(nuevo_serial)
+
+                if nuevo_equipo is None:
+                    print("\nNo existe un equipo con ese serial")
+                    return
+                if self.equipos_prestados(nuevo_serial):
+                    print("\n Ese equipo ya está prestado a otro estudiante")
+                    return None
+                else: 
+                    prestamo_encontrado.equipo = nuevo_equipo
+                    print(f"\n El estudiante {prestamo_encontrado.estudiante.nombre} {prestamo_encontrado.estudiante.apellido} cambio al nuevo equipo: {nuevo_equipo.serial} - {nuevo_equipo.marca}")
+
+            elif opcion_mod == "3":
+                prestamo_encontrado.devuelto = True
+                self.equipos_devueltos.append(prestamo_encontrado.equipo)
+                print("\nEl préstamo ha sido marcado como devuelto.")
                 return
-            if self.equipos_prestados(nuevo_serial):
-                print("\n Ese equipo ya está prestado a otro estudiante")
-                return None
-
-            prestamo_encontrado.equipo = nuevo_equipo
-            print(f"\n El estudiante {prestamo_encontrado.estudiante.nombre} {prestamo_encontrado.estudiante.apellido} cambio al nuevo equipo: {nuevo_equipo.serial} - {nuevo_equipo.marca}")
-
-        elif opcion_mod == "3":
-            print("Modificación cancelada")
-        else:
-            print("Opción inválida.")
+            
+            elif opcion_mod=="4":
+                print("Saliendo del programa...")
+                break
+            else:
+                print("Opcion invalida.")
         
+    #hu5
+    def estudiante_con_prestamos(self, cedula):
+        for prestamo in self.prestamos:
+            if prestamo.estudiante.cedula == cedula and not prestamo.devuelto:
+                return True
+        return False
+    
+    def mostrar_prestamos(self):
+        print("\n=== Inventario de Prestamos  ===")
+        if not self.prestamos:
+            print("No hay equipos prestados")
+            return
+        for equipo in self.prestamos:
+            print(f"\nSerial: {equipo.serial} | Estudiante: {equipo.estudiante.nombre} {equipo.estudiante.apellido} cedula: {equipo.estudiante.cedula}")
+
+    def  imprimir_estudiantes(self):
+        print("\n=== Listado de Estudiantes ===")
+        if not self.estudiantes_diseno + self.estudiantes_ingenieria:
+            print("No hay estudiantes registrados.")
+            return
+        for estudiante in self.estudiantes_diseno + self.estudiantes_ingenieria:
+            if isinstance(estudiante, EstudianteIngenieria):
+                print(f"Estudiant de Ingenieria: {estudiante.nombre} | {estudiante.apellido} | {estudiante.telefono} | {estudiante.numero_semestre} | {estudiante.promedio_acumulado} | {estudiante.serial_equipo}")
+            if isinstance(estudiante, EstudianteDiseno):
+                print(f"Estudiante de diseño: {estudiante.nombre} | {estudiante.apellido} | {estudiante.telefono} | {estudiante.modalidad} | {estudiante.cant_asignaturas} | {estudiante.serial_equipoD}")

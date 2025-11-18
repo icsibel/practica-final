@@ -1,12 +1,13 @@
-from ejecutable import SistemasPrestamos, ComputadorPortatil, TabletaGrafica, validar_texto, EstudianteIngenieria, EstudianteDiseno
+from ejecutable import SistemasPrestamos, ComputadorPortatil, TabletaGrafica, validar_texto, validar_cedula, EstudianteIngenieria, EstudianteDiseno
 sistemasPrestamos = SistemasPrestamos()
 while True:
     print("\n=== MENÚ PRINCIPAL ===")
     print("1. Equipos")
     print("2. Estudiantes")
-    print("3. imprimir inventario total")
-    print("4. Ver equipos devueltos")
-    print("5. salir del programa")
+    print("3. imprimir inventario total de equipos")
+    print("4. imprimir listado de estudiantes")
+    print("5. Ver equipos devueltos")
+    print("6. salir del programa")
     op=input("\n seleccione una opcion: ")
 
     match op:
@@ -25,7 +26,8 @@ while True:
                         print(f"Computador portatil: {equipo.serial} | {equipo.marca} | {equipo.tamano} | {equipo.precio} | {equipo.sistema_operativo} | {equipo.procesador}")
                     if isinstance(equipo, TabletaGrafica):
                         print(f"Tableta grafica: {equipo.serial} | {equipo.marca} | {equipo.tamano} | {equipo.precio} | {equipo.almacenamiento} | {equipo.peso}")
-                    
+                case _:
+                    print("opcion invalida")
 
         case "2":
             print("1. Registrar estudiante")
@@ -33,7 +35,8 @@ while True:
             print("3. Devolver equipo")
             print("4. Modificar préstamo")
             print("5. buscar estudiante")
-            print("6. volver al menu principal")
+            print("6. mostrar prestamos")
+            print("7. volver al menu principal")
             opcion=input("\nseleccione una opcion: ")
 
             match opcion:
@@ -46,26 +49,31 @@ while True:
                 case "4":
                     sistemasPrestamos.modificar_prestamo()
                 case "5":
-                    cedula= validar_texto("Ingrese la cedula del estudiante que deseas buscar: ")
+                    cedula= validar_cedula("Ingrese la cedula del estudiante que deseas buscar: ")
                     cedula = sistemasPrestamos.buscar_estudiante(cedula)
 
                     if isinstance(cedula, EstudianteIngenieria):
                         print(f"Estudiant de Ingenieria: {cedula.nombre} | {cedula.apellido} | {cedula.telefono} | {cedula.numero_semestre} | {cedula.promedio_acumulado} | {cedula.serial_equipo}")
                     if isinstance(cedula, EstudianteDiseno):
-                        print(f"Estudiante de diseño: {equipo.serial} | {equipo.marca} | {equipo.tamano} | {equipo.precio} | {equipo.almacenamiento} | {equipo.peso}")
+                        print(f"Estudiante de diseño: {cedula.nombre} | {cedula.apellido} | {cedula.telefono} | {cedula.modalidad} | {cedula.cant_asignaturas} | {cedula.serial_equipoD}")
                     
                 case "6":
+                    sistemasPrestamos.mostrar_prestamos()
+                case "7":
                     print("Volviendo al menú principal...")
-                    break
+            
                 case _:
                     print("Opción inválida")
         
         case "3":
             sistemasPrestamos.imprimir_inventario()
-        
+
         case "4":
-            sistemasPrestamos.mostrar_devueltos()
+            sistemasPrestamos.imprimir_estudiantes()
         
         case "5":
+            sistemasPrestamos.mostrar_devueltos()
+        
+        case "6":
             print("saliendo del sistema... byeee")
             break
