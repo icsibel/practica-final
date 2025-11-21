@@ -1,52 +1,54 @@
 import re
+import pandas as panditas
+import os
 
 #empezar  validaciones
 #valida letras y espacios - r es para que tome la cadena literal, espacios es el \s, + para que puedan haber muchas letras, 
-    # y $ para marcar el final del texto, ^ para empezar la cadena- r.match es para validar el texto, r valida si y match verifica que si este con las reglas de r, {3, 60} longitud min max
+# y $ para marcar el final del texto, ^ para empezar la cadena- r.match es para validar el texto, r valida si y match verifica que si este con las reglas de r, {3, 60} longitud min max
 def validar_texto(mensaje):
-    while True:
-        atributo = input(mensaje).strip()
-        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ0-9\s]{2,60}$' , atributo):
-            return atributo
-        print("Solo se permiten letras, numeros y espacios, porfavor asegurate de que los datos esten completos (minimo 3 caracteres)")
+    atributo = input(mensaje).strip()
+    if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ0-9\s]{2,60}$' , atributo):
+        return atributo
+    print("Solo se permiten letras, numeros y espacios, porfavor asegurate de que los datos esten completos (minimo 2 caracteres)")
+    return validar_texto(mensaje)
 
 def validar_texto_sin_numeros(mensaje):
-    while True:
-        atributo = input(mensaje).strip()
-        if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{2,60}$', atributo):
-            return atributo
-        print("Solo se permiten letras y espacios, porfavor asegurate de que los datos esten completos (minimo 3 caracteres)")
+    atributo = input(mensaje).strip()
+    if re.match(r'^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{2,60}$', atributo):
+        return atributo
+    print("Solo se permiten letras y espacios, porfavor asegurate de que los datos esten completos (minimo 2 caracteres)")
+    return validar_texto_sin_numeros(mensaje)
 
 def validar_entero(mensaje):
-    while True:
-        atributo = input(mensaje).strip()
-        if atributo.isdigit():
-            return int(atributo)
-        print("Escribe solo números enteros, sin letras ni símbolos.") 
+    atributo = input(mensaje).strip()
+    if atributo.isdigit():
+        return int(atributo)
+    print("Escribe solo números enteros, sin letras ni símbolos")
+    return validar_entero(mensaje) 
 
 def validar_flotante(mensaje):
-    while True:
-        atributo = input(mensaje).strip()
-        try:
-            return float(atributo)
-        except ValueError:
-            print("Escribe un número válido (usa punto, no coma).")
+    atributo = input(mensaje).strip()
+    try:
+        return float(atributo)
+    except ValueError:
+        print("Escribe un número válido (usa punto, no coma)")
+        return validar_flotante(mensaje)
 
 
 def validar_modalidad(mensaje):
-    while True:
-        atributo = input(mensaje).strip().lower()
-        if atributo in ["virtual", "presencial"]:
-            return atributo
-        print("La modalidad debe ser 'virtual' o 'presencial'")
+    atributo = input(mensaje).strip().lower()
+    if atributo in ["virtual", "presencial"]:
+        return atributo
+    print("La modalidad debe ser 'virtual' o 'presencial'")
+    return validar_modalidad(mensaje)
 
 def validar_cedula(mensaje):
-    while True:
-        atributo = input(mensaje).strip()
-        # Solo números pero se devuelve como texto
-        if atributo.isdigit():
-            return atributo
-        print("La cédula solo debe contener numeros, sin letras ni simbolos.")
+    atributo = input(mensaje).strip()
+    # Solo números pero se devuelve como texto
+    if atributo.isdigit():
+        return atributo
+    print("La cédula solo debe contener numeros, sin letras ni simbolos.")
+    return validar_cedula(mensaje)
 
 
 #HU2
@@ -169,22 +171,184 @@ class SistemasPrestamos:
         self.prestamos= []
         self.equipos_devueltos= []
 
+    #HU6 cargar y guardar pandita
+    # os sirve para manejar las funciones del sistema operativo, sirve para crear nuevas carpetas dentro del proyecto
+    # crear nuevos archivos, saber si una ruta existe, esto mira que hay dentro del proyecto
+    # makedir es para crear carpetas
+    # path es ruta
+    # funcion para crear la carpeta datos si no existe
+    def asegurar_carpeta(self):
+        if not os.path.exists("datos"): 
+            os.makedirs("datos")
+
+    def guardar_todo(self):
+        self.asegurar_carpeta()
+        #panditas solo recibe listas de diccionarios
+        datos_inge = []
+        for est in self.estudiantes_ingenieria:
+            datos_inge.append({ "cedula": est.cedula, 
+                               "nombre": est.nombre, 
+                               "apellido": est.apellido, 
+                               "telefono": est.telefono, 
+                               "numero_semestre": est.numero_semestre, 
+                               "promedio_acumulado": est.promedio_acumulado, 
+                               "serial_equipo": est.serial_equipo })
+
+        df_inge = panditas.DataFrame(datos_inge)
+        # el archivo se crea dentro de la carpeta datos
+        # .to_csv es para crear un documento de texto separado por comas, index me quita los indices
+        # encoding es para recibir caracteres especiales, me lo saque de internet :P
+        df_inge.to_csv("datos/estudiantes_ingenieria.csv", index=False, encoding="utf-8")
+
+        datos_dis = []
+        for est in self.estudiantes_diseno:
+            datos_dis.append({ "cedula": est.cedula, 
+                              "nombre": est.nombre, 
+                              "apellido": est.apellido, 
+                              "telefono": est.telefono, 
+                              "modalidad": est.modalidad, 
+                              "cant_asignaturas": est.cant_asignaturas, 
+                              "serial_equipoD": est.serial_equipoD })
+
+        df_dis = panditas.DataFrame(datos_dis)
+        df_dis.to_csv("datos/estudiantes_diseno.csv", index=False, encoding="utf-8")
+
+        datos_eq = []
+        for eq in self.inventario_equipos:
+            if isinstance(eq, TabletaGrafica):
+                datos_eq.append({"serial": eq.serial,
+                                 "tipo": "tableta",
+                                 "marca": eq.marca,
+                                 "tamano": eq.tamano,
+                                 "precio": eq.precio,
+                                 "almacenamiento": eq.almacenamiento,
+                                 "peso": eq.peso})
+
+            if isinstance(eq, ComputadorPortatil):
+                datos_eq.append({ "serial": eq.serial,
+                                 "tipo": "portatil",
+                                 "marca": eq.marca,
+                                 "tamano": eq.tamano,
+                                 "precio": eq.precio,
+                                 "sistema_operativo": eq.sistema_operativo,
+                                 "procesador": eq.procesador})
+
+        df_eq = panditas.DataFrame(datos_eq)
+        df_eq.to_csv("datos/inventario_equipos.csv", index=False, encoding="utf-8")
+
+        print("\n Toda la información fue guardada correctamente")
+
+    # iterrows es para recorrer cada fila del archivo
+    # notna es para saber si un valor existe en el archivo
+    def cargar_todo(self):
+        self.asegurar_carpeta()
+
+        ruta_inge = "datos/estudiantes_ingenieria.csv"
+
+        if not os.path.exists(ruta_inge):
+            df_vacio = panditas.DataFrame(columns=[
+                "cedula", "nombre", "apellido", "telefono",
+                "numero_semestre", "promedio_acumulado", "serial_equipo"])
+            df_vacio.to_csv(ruta_inge, index=False, encoding="utf-8")
+
+        df_inge = panditas.read_csv(ruta_inge, encoding="utf-8")
+        self.estudiantes_ingenieria = []
+
+        for _, fila in df_inge.iterrows():
+            est = EstudianteIngenieria(
+                cedula=fila["cedula"],
+                nombre=fila["nombre"],
+                apellido=fila["apellido"],
+                telefono=fila["telefono"],
+                numero_semestre=int(fila["numero_semestre"]),
+                promedio_acumulado=float(fila["promedio_acumulado"]),
+                serial_equipo=fila["serial_equipo"])
+            
+            self.estudiantes_ingenieria.append(est)
+
+        ruta_dis = "datos/estudiantes_diseno.csv"
+
+        if not os.path.exists(ruta_dis):
+            df_vacio = panditas.DataFrame(columns=[
+                "cedula", "nombre", "apellido", "telefono",
+                "modalidad", "cant_asignaturas", "serial_equipoD"])
+            
+            df_vacio.to_csv(ruta_dis, index=False, encoding="utf-8")
+
+        df_dis = panditas.read_csv(ruta_dis, encoding="utf-8")
+        self.estudiantes_diseno = []
+
+        for _, fila in df_dis.iterrows():
+            est = EstudianteDiseno(
+                cedula=fila["cedula"],
+                nombre=fila["nombre"],
+                apellido=fila["apellido"],
+                telefono=fila["telefono"],
+                modalidad=fila["modalidad"],
+                cant_asignaturas=int(fila["cant_asignaturas"]),
+                serial_equipoD=fila["serial_equipoD"])
+            
+            self.estudiantes_diseno.append(est)
+
+        ruta_eq = "datos/inventario_equipos.csv"
+
+        if not os.path.exists(ruta_eq):
+            df_vacio = panditas.DataFrame(columns=[
+                "serial", "tipo", "marca", "tamano", "precio",
+                "almacenamiento", "peso",
+                "sistema_operativo", "procesador"])
+            
+            df_vacio.to_csv(ruta_eq, index=False, encoding="utf-8")
+
+        df_eq = panditas.read_csv(ruta_eq, encoding="utf-8")
+        self.inventario_equipos = []
+
+        for _, fila in df_eq.iterrows():
+            tipo = fila["tipo"]
+            serial = fila["serial"]
+            marca = fila["marca"]
+            tamano = float(fila["tamano"])
+            precio = float(fila["precio"])
+
+            if tipo == "tableta":
+                if panditas.notna(fila["peso"]):
+                    peso = float(fila["peso"])
+                else: 
+                    peso= 0.0
+
+                equipo = TabletaGrafica(serial, marca, tamano, precio, peso)
+
+                if panditas.notna(fila["almacenamiento"]):
+                    equipo.almacenamiento = fila["almacenamiento"]
+
+            elif tipo == "portatil":
+                equipo = ComputadorPortatil(serial, marca, tamano, precio)
+
+                if panditas.notna(fila["sistema_operativo"]):
+                    equipo.sistema_operativo = fila["sistema_operativo"]
+
+                if panditas.notna(fila["procesador"]):
+                    equipo.procesador = fila["procesador"]
+
+            self.inventario_equipos.append(equipo)
+
+
+        print("\n Datos cargados exitosamente (archivos creados si no existian)\n")
+
+
     
     def registar_equipo(self):
-        print("\n--- Registrar equipo ---")
-        print("Que tipo de eqipo requiere el estudiante: \n1. Tableta grafica \n2. Computador portatil")
-        opcion= input("Elige una opcion: ")
+        while True:
+            print("\n--- Registrar equipo ---")
+            print("Qué tipo de equipo requiere el estudiante:")
+            print("1. Tableta gráfica")
+            print("2. Computador portátil")
+            opcion = input("Elige una opción: ")
 
-        #validacion extra porque no me estaba reconociendo di habia un error  al escoger la opcion
-        #no supe como mas hacerla pero asi funciona
-        match opcion:
-            case "1":
-                tipo = "tableta"
-            case "2":
-                tipo = "pc"
-            case _:
-                print("Opción inválida")
-                return
+            if opcion in ("1", "2"):
+                break
+            else:
+                print("\nOpción inválida, selecciona solo 1 o 2.\n")
 
         serial= validar_texto("Serial: ")
         marca= validar_texto_sin_numeros("Marca (sin numeros): ")
@@ -196,19 +360,19 @@ class SistemasPrestamos:
                 print("\n Este equipo ya esta registrado")
                 return equipo
             
-        match opcion:
-            case "1":
-                peso=validar_flotante("Peso: ")
-                #aqui ya lo relaciono con la clase y le paso las variables a verificar
-                equipo= TabletaGrafica(serial, marca, tamano, precio,peso)
-                equipo.elegir_almacenamiento()
-            case "2":
-                equipo= ComputadorPortatil(serial, marca, tamano, precio)
-                equipo.elegir_sistema_operativo()
-                equipo.elegir_procesador()
+        if opcion == "1":
+            peso=validar_flotante("Peso: ")
+            #aqui ya lo relaciono con la clase y le paso las variables a verificar
+            equipo= TabletaGrafica(serial, marca, tamano, precio,peso)
+            equipo.elegir_almacenamiento()
+        elif opcion == "2":
+            equipo= ComputadorPortatil(serial, marca, tamano, precio)
+            equipo.elegir_sistema_operativo()
+            equipo.elegir_procesador()
         
         self.inventario_equipos.append(equipo)
         print("El equipo se registro con exito :) ")
+        self.guardar_todo()
 
     #buscar equipo por serial
     def buscar_equipo(self,serial):
@@ -219,9 +383,17 @@ class SistemasPrestamos:
         return None
     
     def registrar_estudiante(self):
-        print("\n--- Registrar estudiante ---")
-        print("A que facultad pertenece el estudiante:  \n1. Ingenieria \n2. Diseño")
-        tipo= input("\n Elige una opcion: ")
+        while True:
+            print("\n--- Registrar estudiante ---")
+            print("¿A qué facultad pertenece el estudiante?")
+            print("1. Ingeniería")
+            print("2. Diseño")
+            tipo = input("\nElige una opción: ")
+
+            if tipo in ("1", "2"):
+                break
+            else:
+                print("\nOpción inválida, selecciona solo 1 o 2.\n")
 
         cedula= validar_cedula("Cedula: ")
         nombre= validar_texto_sin_numeros("Nombre: ")
@@ -241,6 +413,7 @@ class SistemasPrestamos:
             estudiante= EstudianteIngenieria(cedula, nombre, apellido,telefono, numero_semestre, promedio_acumulado,serial_equipo)
             self.estudiantes_ingenieria.append(estudiante)
             print("El estudiante se registro con exito :) ")
+            self.guardar_todo()
 
         elif tipo== "2":
             modalidad= validar_modalidad("Modalidad (virtual o presencial): ")
@@ -249,9 +422,7 @@ class SistemasPrestamos:
             estudiante= EstudianteDiseno(cedula, nombre, apellido,telefono, modalidad, cant_asignaturas, serial_equipoD)
             self.estudiantes_diseno.append(estudiante)
             print("El estudiante se registro con exito :) ")
-        else:
-            print("Opcion invalida, no se registro ningun estudiante")
-            return
+            self.guardar_todo()
 
 
 
@@ -301,6 +472,7 @@ class SistemasPrestamos:
         prest = Prestamo(estudiante, equipo)
         self.prestamos.append(prest)
         print("\n Prestamo registrado")
+        self.guardar_todo()
 
 
     def devolver_equipo(self):
@@ -391,6 +563,7 @@ class SistemasPrestamos:
                 
                 print("\n Datos actualizados correctamente")
                 print(f"\n El estudiante  cambio sus datos a: {nuevo_nombre} - {nuevo_apellido}- {nuevo_telefono}")
+                self.guardar_todo()
 
             elif opcion_mod == "2":
                 nuevo_serial = validar_texto("\nIngrese el serial del nuevo equipo: ")
@@ -405,11 +578,13 @@ class SistemasPrestamos:
                 else: 
                     prestamo_encontrado.equipo = nuevo_equipo
                     print(f"\n El estudiante {prestamo_encontrado.estudiante.nombre} {prestamo_encontrado.estudiante.apellido} cambio al nuevo equipo: {nuevo_equipo.serial} - {nuevo_equipo.marca}")
+                    self.guardar_todo()
 
             elif opcion_mod == "3":
                 prestamo_encontrado.devuelto = True
                 self.equipos_devueltos.append(prestamo_encontrado.equipo)
                 print("\nEl préstamo ha sido marcado como devuelto.")
+                self.guardar_todo()
                 return
             
             elif opcion_mod=="4":

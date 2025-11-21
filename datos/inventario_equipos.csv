@@ -1,0 +1,4 @@
+serial,tipo,marca,tamano,precio,almacenamiento,peso,sistema_operativo,procesador
+123,tableta,Samsung,15.0,2000.0,1 TB,12.0,,
+321,portatil,Asus,14.0,35000.0,,,Window 11,AMD Ryzen
+147,portatil,aaa,152.0,12300.0,,,Window 11,Intel Core i5
